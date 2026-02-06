@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Coffee Shop &mdash; Control</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --panel:#171a21;
+      --text:#e9eef7;
+      --muted:#a9b4c7;
+      --a:#7dd3fc;
+      --b:#fda4af;
+      --border:rgba(255,255,255,.08);
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1100px 500px at 15% 0%, rgba(125,211,252,.12), transparent 60%),
+                  radial-gradient(1100px 500px at 85% 10%, rgba(253,164,175,.10), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .wrap{
+      width:min(980px, 100%);
+      display:grid;
+      gap:16px;
+      grid-template-columns: 1.1fr .9fr;
+      align-items:start;
+    }
+
+    .card{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      background: rgba(0,0,0,.15);
+    }
+    header h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.3px;
+    }
+    header .status{
+      font-size:12px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background:#ef4444;
+      box-shadow: 0 0 0 4px rgba(239,68,68,.15);
+    }
+    .dot.ok{
+      background:#22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,.15);
+    }
+
+    .body{
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    label{
+      font-size:12px;
+      color: var(--muted);
+      display:block;
+      margin-bottom:6px;
+    }
+
+    input[type="text"], textarea{
+      width:100%;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline:none;
+      font-size: 14px;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .speakerPick{
+      display:flex;
+      gap:10px;
+    }
+    .pill{
+      flex:1;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      user-select:none;
+      text-align:center;
+      font-weight: 750;
+      letter-spacing:.2px;
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+    .pill[data-s="A"].active{
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.10);
+      color: var(--a);
+    }
+    .pill[data-s="B"].active{
+      border-color: rgba(253,164,175,.35);
+      background: rgba(253,164,175,.10);
+      color: var(--b);
+    }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 700;
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+    .btn:hover{ background: rgba(255,255,255,.07); }
+    .btn.primary{
+      border-color: rgba(34,197,94,.35);
+    }
+    .btn.danger{
+      border-color: rgba(239,68,68,.35);
+    }
+    .btn.danger:hover{
+      background: rgba(239,68,68,.12);
+    }
+
+    .tips{
+      padding: 14px 16px;
+      border-top:1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .miniLog{
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .miniItem{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .miniItem .who{
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing:.3px;
+      margin-bottom: 6px;
+    }
+    .miniItem .who.a{ color: var(--a); }
+    .miniItem .who.b{ color: var(--b); }
+    .miniItem .txt{
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .miniItem .t{
+      margin-top:6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px){
+      .wrap{
+        grid-template-columns: 1fr;
+      }
+      .miniLog{
+        max-height: 45vh;
+      }
+    }
+
+    @media (max-width: 640px){
+      body{
+        padding:12px;
+      }
+      header h1{
+        font-size:16px;
+      }
+      input[type="text"], textarea, .btn{
+        font-size:16px; /* prevent iOS zoom */
+      }
+      .row{
+        grid-template-columns: 1fr;
+      }
+      .btns{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      #btnSend{
+        grid-column: 1 / -1;
+        font-size:17px;
+        padding: 12px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>&#9749; Coffee Shop &mdash; Control</h1>
+        <div class="status">
+          <span class="dot" id="dot"></span>
+          <span id="statusText">Looking for Stage&hellip;</span>
+        </div>
+      </header>
+
+      <div class="body">
+        <div class="row">
+          <div>
+            <label>Speaker A Label</label>
+            <input type="text" id="labelA" value="Speaker A" />
+          </div>
+          <div>
+            <label>Speaker B Label</label>
+            <input type="text" id="labelB" value="Speaker B" />
+          </div>
+        </div>
+
+        <div>
+          <label>Select Speaker</label>
+          <div class="speakerPick">
+            <div class="pill active" data-s="A" id="pickA">A</div>
+            <div class="pill" data-s="B" id="pickB">B</div>
+          </div>
+        </div>
+
+        <div>
+          <label>Line</label>
+          <textarea id="line" placeholder="Type the next line&hellip;" autocomplete="off" autocapitalize="sentences"></textarea>
+        </div>
+
+        <div class="btns">
+          <button class="btn primary" id="btnSend">Send Line (Ctrl/&#8984; + Enter)</button>
+          <button class="btn" id="btnSwap">Swap Speaker (Tab)</button>
+          <button class="btn" id="btnSync">Sync From Stage</button>
+          <button class="btn danger" id="btnClear">Clear Both</button>
+        </div>
+      </div>
+
+      <div class="tips">
+        <b>Workflow:</b> Keep <code>stage.html</code> on a projector/TV. Use this screen to feed lines.
+        <br/>
+        <b>Shortcuts:</b> Ctrl/&#8984; + Enter = send &bull; Tab = swap speaker
+      </div>
+    </div>
+
+    <div class="card">
+      <header>
+        <h1>Recent Lines</h1>
+        <div class="status" style="gap:6px;">
+          <span style="color:var(--muted);font-size:12px;">(local view)</span>
+        </div>
+      </header>
+      <div class="miniLog" id="miniLog"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      doc,
+      getDoc,
+      setDoc,
+      onSnapshot,
+      query,
+      where,
+      orderBy,
+      limit,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Coffee Shop Control (Input)
+    const CHANNEL_NAME = "coffee-shop";
+    const dotEl = document.getElementById("dot");
+    const statusText = document.getElementById("statusText");
+
+    const pickA = document.getElementById("pickA");
+    const pickB = document.getElementById("pickB");
+    const labelA = document.getElementById("labelA");
+    const labelB = document.getElementById("labelB");
+    const lineEl = document.getElementById("line");
+
+    const miniLog = document.getElementById("miniLog");
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCnT28ZM_IRqp4-fxNu9yGcg5iJYZ01tmg",
+      authDomain: "coffee-shop-db023.firebaseapp.com",
+      projectId: "coffee-shop-db023",
+      storageBucket: "coffee-shop-db023.firebasestorage.app",
+      messagingSenderId: "313066003641",
+      appId: "1:313066003641:web:5ece7968d169f8feef0f68",
+      measurementId: "G-W9TJCLJSYG"
+    };
+
+    const FIREBASE_ENABLED = Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
+
+    let speaker = "A";
+    let localTranscript = [];
+    let bc = null;
+
+    let db = null;
+    let activeSessionId = null;
+    let unsubscribeLines = null;
+    let unsubscribeSession = null;
+    let firebaseInitPromise = null;
+
+    function setStatus(ok, text){
+      dotEl.classList.toggle("ok", !!ok);
+      statusText.textContent = text;
+    }
+
+    function uid(){
+      return "L" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(36);
+    }
+
+    function nowTime() {
+      const d = new Date();
+      return d.toLocaleTimeString([], {hour: "2-digit", minute:"2-digit", second:"2-digit"});
+    }
+
+    function setSpeaker(s){
+      speaker = s;
+      pickA.classList.toggle("active", s === "A");
+      pickB.classList.toggle("active", s === "B");
+    }
+
+    pickA.addEventListener("click", () => setSpeaker("A"));
+    pickB.addEventListener("click", () => setSpeaker("B"));
+
+    function renderMiniList(entries){
+      miniLog.innerHTML = "";
+      for(const e of entries){
+        const item = document.createElement("div");
+        item.className = "miniItem";
+
+        const who = document.createElement("div");
+        who.className = "who " + (e.speaker === "A" ? "a" : "b");
+        who.textContent = (e.speaker === "A" ? (e.speakerLabel || "A") : (e.speakerLabel || "B"));
+
+        const txt = document.createElement("div");
+        txt.className = "txt";
+        txt.textContent = e.text;
+
+        const t = document.createElement("div");
+        t.className = "t";
+        t.textContent = `${e.time || ""} • ${e.id}`;
+
+        item.appendChild(who);
+        item.appendChild(txt);
+        item.appendChild(t);
+        miniLog.appendChild(item);
+      }
+    }
+
+    function addMini(entry){
+      localTranscript.unshift(entry);
+      localTranscript = localTranscript.slice(0, 25);
+      renderMiniList(localTranscript);
+    }
+
+    function initLocal(){
+      // Communication: BroadcastChannel + localStorage fallback
+      try{
+        bc = new BroadcastChannel(CHANNEL_NAME);
+        bc.onmessage = (ev) => handleMessage(ev.data);
+        setStatus(true, "Connected (BroadcastChannel)");
+      }catch(e){
+        setStatus(false, "BroadcastChannel unavailable — using fallback");
+      }
+
+      window.addEventListener("storage", (e) => {
+        if(e.key !== "coffee_shop_bus" || !e.newValue) return;
+        try{
+          const msg = JSON.parse(e.newValue);
+          handleMessage(msg);
+        }catch(err){}
+      });
+
+      send({type:"PING", at: Date.now()});
+    }
+
+    async function initFirebase(){
+      if(firebaseInitPromise) return firebaseInitPromise;
+      firebaseInitPromise = (async () => {
+        const app = initializeApp(FIREBASE_CONFIG);
+        db = getFirestore(app);
+        setStatus(true, "Connected (Firebase)");
+
+        const sessionDocRef = doc(db, "coffeeShopMeta", "session");
+
+        async function ensureSession(){
+          const snap = await getDoc(sessionDocRef);
+          if(snap.exists() && snap.data().activeSessionId){
+            activeSessionId = snap.data().activeSessionId;
+          }else{
+            activeSessionId = uid();
+            await setDoc(sessionDocRef, {activeSessionId, updatedAt: serverTimestamp()});
+          }
+        }
+
+        await ensureSession();
+
+        unsubscribeSession = onSnapshot(sessionDocRef, (snap) => {
+          if(!snap.exists()) return;
+          const next = snap.data().activeSessionId;
+          if(next && next !== activeSessionId){
+            activeSessionId = next;
+            subscribeLines();
+            setStatus(true, "Session updated");
+          }
+        });
+
+        function subscribeLines(){
+          if(unsubscribeLines) unsubscribeLines();
+          const linesColRef = collection(db, "coffeeShopSessions", activeSessionId, "lines");
+          const q = query(
+            linesColRef,
+            orderBy("ts", "desc"),
+            limit(25)
+          );
+          unsubscribeLines = onSnapshot(q, (snap) => {
+            const entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            entries.sort((a, b) => {
+              const ta = a.ts?.seconds || 0;
+              const tb = b.ts?.seconds || 0;
+              return ta - tb;
+            });
+            localTranscript = entries;
+            renderMiniList(localTranscript);
+          });
+        }
+
+        subscribeLines();
+
+        return { sessionDocRef };
+      })();
+      return firebaseInitPromise;
+    }
+
+    function send(obj){
+      if(bc){
+        bc.postMessage(obj);
+      }else{
+        localStorage.setItem("coffee_shop_bus", JSON.stringify({ ...obj, _t: Date.now() }));
+      }
+    }
+
+    function handleMessage(msg){
+      if(!msg || typeof msg !== "object") return;
+
+      if(msg.type === "PING"){
+        setStatus(true, "Stage connected");
+        send({type:"PONG", at: Date.now()});
+        return;
+      }
+
+      if(msg.type === "PONG"){
+        setStatus(true, "Stage responded");
+        return;
+      }
+
+      if(msg.type === "CLEAR"){
+        localTranscript = [];
+        miniLog.innerHTML = "";
+        setStatus(true, "Cleared");
+        return;
+      }
+
+      if(msg.type === "SYNC_DATA" && Array.isArray(msg.payload)){
+        localTranscript = msg.payload.slice().reverse().slice(0, 25);
+        renderMiniList(localTranscript);
+        setStatus(true, "Synced");
+        return;
+      }
+    }
+
+    async function sendLine(){
+      const text = lineEl.value.trim();
+      if(!text) return;
+
+      const entry = {
+        id: uid(),
+        time: nowTime(),
+        speaker,
+        speakerLabel: speaker === "A" ? labelA.value.trim() || "Speaker A" : labelB.value.trim() || "Speaker B",
+        text
+      };
+
+      if(FIREBASE_ENABLED){
+        await initFirebase();
+        const linesColRef = collection(db, "coffeeShopSessions", activeSessionId, "lines");
+        await addDoc(linesColRef, {
+          ...entry,
+          ts: serverTimestamp()
+        });
+        addMini(entry);
+      }else{
+        send({type:"LINE", payload: entry});
+        addMini(entry);
+      }
+
+      lineEl.value = "";
+      lineEl.focus();
+    }
+
+    // Buttons
+    document.getElementById("btnSend").addEventListener("click", sendLine);
+
+    document.getElementById("btnSwap").addEventListener("click", () => {
+      setSpeaker(speaker === "A" ? "B" : "A");
+      lineEl.focus();
+    });
+
+    document.getElementById("btnSync").addEventListener("click", () => {
+      if(FIREBASE_ENABLED){
+        setStatus(true, "Live sync via Firebase");
+        return;
+      }
+      send({type:"SYNC_REQUEST"});
+      setStatus(true, "Requested sync…");
+    });
+
+    document.getElementById("btnClear").addEventListener("click", async () => {
+      if(!confirm("Clear the stage transcript and local recent lines?")) return;
+
+      if(FIREBASE_ENABLED){
+        const { sessionDocRef } = await initFirebase();
+        activeSessionId = uid();
+        await setDoc(sessionDocRef, {activeSessionId, updatedAt: serverTimestamp()});
+        localTranscript = [];
+        miniLog.innerHTML = "";
+        setStatus(true, "Cleared both");
+        return;
+      }
+
+      send({type:"CLEAR"});
+      localTranscript = [];
+      miniLog.innerHTML = "";
+      setStatus(true, "Cleared both");
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      if((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+        e.preventDefault();
+        sendLine();
+      }
+      if(e.key === "Tab" && document.activeElement === lineEl){
+        e.preventDefault();
+        setSpeaker(speaker === "A" ? "B" : "A");
+      }
+    });
+
+    if(FIREBASE_ENABLED){
+      initFirebase();
+    }else{
+      initLocal();
+    }
+  </script>
+</body>
+</html>

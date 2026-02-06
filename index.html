@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coffee Shop Control Panel</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
+
+    :root{
+      --bg1:#0c0f14;
+      --bg2:#0f172a;
+      --card:#111827;
+      --text:#f8fafc;
+      --muted:#b6c2d0;
+      --accent:#38bdf8;
+      --accent2:#f97316;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:"Space Grotesk", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(56,189,248,.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 20%, rgba(249,115,22,.14), transparent 60%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      padding:24px;
+    }
+
+    .wrap{
+      width:min(1100px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    header{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    header h1{
+      margin:0;
+      font-size: clamp(26px, 4vw, 44px);
+      letter-spacing:.4px;
+    }
+    header p{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(14px, 2vw, 18px);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:16px;
+    }
+
+    .card{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:20px;
+      padding:22px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-height: 220px;
+    }
+
+    .card h2{
+      margin:0;
+      font-size: clamp(20px, 3vw, 30px);
+    }
+
+    .card p{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(14px, 2.2vw, 18px);
+      line-height:1.4;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      border-radius:14px;
+      border:1px solid transparent;
+      padding:12px 16px;
+      font-weight:700;
+      text-decoration:none;
+      color:#0b0b0b;
+      background: var(--accent);
+      transition: transform .12s ease, filter .12s ease;
+      width:fit-content;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .btn.secondary{
+      background: var(--accent2);
+      color:#0b0b0b;
+    }
+
+    .note{
+      color:var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Lock screen */
+    .lock{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(56,189,248,.12), transparent 60%),
+        radial-gradient(900px 500px at 85% 20%, rgba(249,115,22,.10), transparent 60%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      z-index: 10;
+      padding:24px;
+    }
+    .lockCard{
+      width:min(520px, 100%);
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:20px;
+      padding:24px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .lockCard h2{
+      margin:0;
+      font-size: clamp(22px, 3.4vw, 34px);
+    }
+    .lockCard p{
+      margin:0;
+      color:var(--muted);
+    }
+    .codeRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    #codeInput{
+      flex:1 1 200px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      outline:none;
+      font-size: 20px;
+      letter-spacing: 6px;
+      text-align:center;
+    }
+    .error{
+      color:#fecaca;
+      display:none;
+      font-size: 14px;
+    }
+    .shake{
+      animation: shake .2s linear 2;
+    }
+    @keyframes shake{
+      0%{ transform: translateX(0); }
+      25%{ transform: translateX(-6px); }
+      50%{ transform: translateX(6px); }
+      75%{ transform: translateX(-4px); }
+      100%{ transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="lock" id="lock">
+    <div class="lockCard" id="lockCard">
+      <h2>Enter 5‑Digit Access Code</h2>
+      <p>This site is locked. Enter the code to continue.</p>
+      <div class="codeRow">
+        <input id="codeInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="•••••" aria-label="Access code" />
+        <button class="btn" id="unlockBtn">Unlock</button>
+      </div>
+      <div class="error" id="lockError">Incorrect code. Try again.</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <h1>Coffee Shop Control Panel</h1>
+      <p>Choose which screen you want to open.</p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Stage Display</h2>
+        <p>Large, simple text for the audience screen. Keep this on a TV or projector.</p>
+        <a class="btn" href="stage.html">Open Stage Display</a>
+      </section>
+
+      <section class="card">
+        <h2>Control Room</h2>
+        <p>Send lines, swap speakers, and manage the transcript from your phone.</p>
+        <a class="btn secondary" href="control.html">Open Control Room</a>
+      </section>
+    </div>
+
+    <div class="note">Tip: Open the Stage Display on the big screen and Control Room on your phone.</div>
+  </div>
+
+  <script>
+    (function(){
+      const CODE = "45404";
+      const lock = document.getElementById("lock");
+      const input = document.getElementById("codeInput");
+      const btn = document.getElementById("unlockBtn");
+      const err = document.getElementById("lockError");
+      const card = document.getElementById("lockCard");
+
+      function check(){
+        if(input.value === CODE){
+          lock.style.display = "none";
+          return;
+        }
+        err.style.display = "block";
+        card.classList.remove("shake");
+        // restart animation
+        void card.offsetWidth;
+        card.classList.add("shake");
+        input.value = "";
+        input.focus();
+      }
+
+      btn.addEventListener("click", check);
+      input.addEventListener("keydown", (e) => {
+        if(e.key === "Enter") check();
+      });
+      input.focus();
+    })();
+  </script>
+</body>
+</html>
