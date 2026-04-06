@@ -297,66 +297,67 @@
     async function initFirebase(){
       if(firebaseInitPromise) return firebaseInitPromise;
       firebaseInitPromise = (async () => {
-        const app = initializeApp(FIREBASE_CONFIG);
-        const auth = getAuth(app);
         try {
+          const app = initializeApp(FIREBASE_CONFIG);
+          const auth = getAuth(app);
           await signInAnonymously(auth);
-        } catch (err) {
-          console.error("Firebase auth failed", err);
-          if (err?.code === "auth/configuration-not-found") {
-            setStatus(false, "Firebase auth not configured. Enable Anonymous sign-in in Firebase console.");
-          } else {
-            setStatus(false, "Firebase auth failed");
+          db = getFirestore(app);
+          setStatus(true, "Connected (Firebase)");
+
+          const sessionDocRef = doc(db, "coffeeShopMeta", "session");
+
+          async function ensureSession(){
+            const snap = await getDoc(sessionDocRef);
+            if(snap.exists() && snap.data().activeSessionId){
+              activeSessionId = snap.data().activeSessionId;
+            }else{
+              activeSessionId = "S-" + Date.now().toString(36);
+              await setDoc(sessionDocRef, {activeSessionId, updatedAt: serverTimestamp()});
+            }
           }
-          throw err;
-        }
-        db = getFirestore(app);
-        setStatus(true, "Connected (Firebase)");
 
-        const sessionDocRef = doc(db, "coffeeShopMeta", "session");
+          await ensureSession();
 
-        async function ensureSession(){
-          const snap = await getDoc(sessionDocRef);
-          if(snap.exists() && snap.data().activeSessionId){
-            activeSessionId = snap.data().activeSessionId;
-          }else{
-            activeSessionId = "S-" + Date.now().toString(36);
-            await setDoc(sessionDocRef, {activeSessionId, updatedAt: serverTimestamp()});
-          }
-        }
-
-        await ensureSession();
-
-        unsubscribeSession = onSnapshot(sessionDocRef, (snap) => {
-          if(!snap.exists()) return;
-          const next = snap.data().activeSessionId;
-          if(next && next !== activeSessionId){
-            activeSessionId = next;
-            subscribeLines();
-            setStatus(true, "Session updated");
-          }
-        });
-
-        function subscribeLines(){
-          if(unsubscribeLines) unsubscribeLines();
-          const linesColRef = collection(db, "coffeeShopSessions", activeSessionId, "lines");
-          const q = query(
-            linesColRef,
-            orderBy("ts", "asc"),
-            limit(200)
-          );
-          unsubscribeLines = onSnapshot(q, (snap) => {
-            const entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            transcript = entries;
-            logEl.innerHTML = "";
-            transcript.forEach(renderLine);
-            saveTranscript();
+          unsubscribeSession = onSnapshot(sessionDocRef, (snap) => {
+            if(!snap.exists()) return;
+            const next = snap.data().activeSessionId;
+            if(next && next !== activeSessionId){
+              activeSessionId = next;
+              subscribeLines();
+              setStatus(true, "Session updated");
+            }
           });
+
+          function subscribeLines(){
+            if(unsubscribeLines) unsubscribeLines();
+            const linesColRef = collection(db, "coffeeShopSessions", activeSessionId, "lines");
+            const q = query(
+              linesColRef,
+              orderBy("ts", "asc"),
+              limit(200)
+            );
+            unsubscribeLines = onSnapshot(q, (snap) => {
+              const entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+              transcript = entries;
+              logEl.innerHTML = "";
+              transcript.forEach(renderLine);
+              saveTranscript();
+            });
+          }
+
+          subscribeLines();
+
+          return { sessionDocRef };
+        } catch (err) {
+          console.error("Firebase init failed", err);
+          if (err?.code === "auth/configuration-not-found") {
+            setStatus(false, "Firebase auth not configured. Falling back to local mode.");
+          } else {
+            setStatus(false, "Firebase init failed. Falling back to local mode.");
+          }
+          initLocal();
+          return null;
         }
-
-        subscribeLines();
-
-        return { sessionDocRef };
       })();
       return firebaseInitPromise;
     }
@@ -425,7 +426,7 @@
     });
 
     if(FIREBASE_ENABLED){
-      initFirebase();
+      initFirebase().catch(() => {});
     }else{
       loadTranscript();
       initLocal();
