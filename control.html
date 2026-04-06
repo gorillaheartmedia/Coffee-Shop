@@ -444,7 +444,11 @@
           await signInAnonymously(auth);
         } catch (err) {
           console.error("Firebase auth failed", err);
-          setStatus(false, "Firebase auth failed");
+          if (err?.code === "auth/configuration-not-found") {
+            setStatus(false, "Firebase auth not configured. Enable Anonymous sign-in in Firebase console.");
+          } else {
+            setStatus(false, "Firebase auth failed");
+          }
           throw err;
         }
         db = getFirestore(app);
