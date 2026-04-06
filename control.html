@@ -320,6 +320,10 @@
       limit,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getAuth,
+      signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
     // Coffee Shop Control (Input)
     const CHANNEL_NAME = "coffee-shop";
@@ -435,6 +439,14 @@
       if(firebaseInitPromise) return firebaseInitPromise;
       firebaseInitPromise = (async () => {
         const app = initializeApp(FIREBASE_CONFIG);
+        const auth = getAuth(app);
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          console.error("Firebase auth failed", err);
+          setStatus(false, "Firebase auth failed");
+          throw err;
+        }
         db = getFirestore(app);
         setStatus(true, "Connected (Firebase)");
 
